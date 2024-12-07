@@ -2,16 +2,20 @@ import { WebSocketServer, WebSocket } from "ws";
 import { makeString } from "./utils/makeString";
 
 const wss = new WebSocketServer({ port: 8080 })
-
 const rooms: Record<string, WebSocket[]> = {}
 
 wss.on('connection', (socket) => {
     socket.on('message', (message) => {
         const parsedMessage = JSON.parse(message.toString())
-        if (parsedMessage.type == 'createRoom') {
+        if (parsedMessage.type == 'createFuncRoom') {
             const roomId = makeString(5)
             rooms[roomId] = []
-            socket.send('Room Created Succesffully')
+            socket.send(roomId)
+        }
+
+        if (parsedMessage.type == 'createRoom') {
+            const roomId = parsedMessage.payload.roomId
+            rooms[roomId] = []
         }
 
         if (parsedMessage.type == 'getRooms') {
@@ -24,21 +28,21 @@ wss.on('connection', (socket) => {
 
         if (parsedMessage.type == 'join') {
             const roomId = parsedMessage.payload.roomId
+            const username = parsedMessage.payload.username
             if (!rooms[roomId]) {
                 rooms[roomId] = []
             }
             if (rooms[roomId].includes(socket)) {
-                socket.send('Already Joined This Room')
+                // socket.send('Already Joined This Room')
                 return
             }
             rooms[roomId].push(socket)
-            socket.send("Joined Successfully")
+            // socket.send("Joined Successfully")
         }
 
         if (parsedMessage.type == 'message') {
             const message = parsedMessage.payload.message
             const roomId = parsedMessage.roomId
-            const username = parsedMessage.username
             if (!rooms[roomId]) {
                 socket.send('No room exists')
                 return
